@@ -35,6 +35,21 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
+Для демонстрации с доступом с других машин можно взять отдельный файл:
+
+```bash
+cp .env.demo .env
+docker compose up --build -d
+```
+
+Для релизной среды используйте шаблон:
+
+```bash
+cp .env.release .env
+```
+
+Перед запуском релиза обязательно замените домены, `DJANGO_SECRET_KEY` и пароль PostgreSQL.
+
 Проверка backend:
 
 ```text
@@ -51,6 +66,26 @@ http://localhost:8000/health/
 
 ```text
 http://localhost:3000/
+```
+
+Если проект запущен на сервере или виртуальной машине, открывайте frontend по адресу этого сервера:
+
+```text
+http://<адрес-сервера>:3000/
+```
+
+В `.env.demo` для этого используется автоматическое определение host:
+
+```env
+DJANGO_ALLOWED_HOSTS=*
+CORS_ALLOW_ALL_ORIGINS=True
+VITE_API_BASE_URL=auto
+```
+
+Frontend сам построит адрес API как `http://<адрес-сервера>:8000`. После изменения `.env` пересоздайте контейнеры:
+
+```bash
+docker compose up -d --force-recreate backend frontend
 ```
 
 Заполнить демо-данные:
@@ -398,6 +433,12 @@ npm run dev
 ## Переменные окружения
 
 Основной файл окружения создается из `.env.example`.
+
+В проекте есть три шаблона окружения:
+
+- `.env.example` - локальный запуск на той же машине.
+- `.env.demo` - демонстрационный запуск с доступом с других машин без привязки к конкретному IP.
+- `.env.release` - релизный шаблон с production-настройками, доменом сервера и placeholder-секретами.
 
 | Переменная | Назначение |
 | --- | --- |
