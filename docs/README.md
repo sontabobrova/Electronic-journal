@@ -20,6 +20,3 @@
 - Backend healthcheck: `http://localhost:8000/health/`
 - Django admin: `http://localhost:8000/admin/`
 
-## Что не входит в текущий состав
-
-Интеграция с СЭД не реализуется и не является обязательной частью текущей версии проекта.
