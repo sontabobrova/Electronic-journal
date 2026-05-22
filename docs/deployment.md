@@ -1,32 +1,58 @@
 # Развертывание и эксплуатационный запуск
 
+Актуализировано: 22.05.2026.
+
+Документ описывает локальный запуск проекта через Docker Compose и базовые действия для эксплуатации стенда.
+
 ## Требования
 
-- Docker и Docker Compose.
-- Свободные порты `3000`, `8000`, `5432`, `6379`, если значения не переопределены в `.env`.
-- Доступ к каталогу проекта и право создавать Docker volumes.
+- Docker.
+- Docker Compose.
+- Свободные порты:
+  - `3000` - frontend;
+  - `8000` - backend;
+  - `5432` - PostgreSQL;
+  - `6379` - Redis.
+- Доступ на чтение и запись к каталогу проекта.
+
+## Состав Docker Compose
+
+| Сервис | Назначение |
+| --- | --- |
+| `frontend` | React/Vite клиентская часть |
+| `backend` | Django REST API |
+| `db` | PostgreSQL 16 |
+| `redis` | Redis для Celery |
+| `celery-worker` | выполнение фоновых задач |
+| `celery-beat` | запуск задач по расписанию |
+
+Volumes:
+
+- `postgres_data` - данные PostgreSQL;
+- `redis_data` - данные Redis;
+- `frontend_node_modules` - зависимости frontend внутри контейнера.
 
 ## Первый запуск
 
-1. Создайте файл окружения:
+1. Создать `.env`:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Запустите сервисы:
+2. Собрать и запустить сервисы:
 
    ```bash
    docker compose up --build -d
    ```
 
-3. Проверьте состояние контейнеров:
+3. Проверить контейнеры:
 
    ```bash
    docker compose ps
    ```
 
-4. Проверьте backend:
+4. Проверить backend:
 
    ```text
    http://localhost:8000/health/
@@ -38,62 +64,133 @@
    {"status":"ok"}
    ```
 
-5. Откройте клиентскую часть:
+5. Открыть frontend:
 
    ```text
    http://localhost:3000/
    ```
 
-## Демо-данные для приемки
+## Миграции
 
-Команда создает администратора, преподавателя, студента, группу, дисциплину, учебный период, назначение, оценку, посещаемость и напоминание. Команду можно запускать повторно.
+При старте `backend` выполняет:
+
+```bash
+python manage.py migrate
+```
+
+Ручной запуск:
+
+```bash
+docker compose exec backend python manage.py migrate
+```
+
+Проверка, что миграции не забыты:
+
+```bash
+docker compose exec backend python manage.py makemigrations --check --dry-run
+```
+
+## Демо-данные
+
+Создание приемочного набора данных:
 
 ```bash
 docker compose exec backend python manage.py create_demo_data
 ```
 
+Команда создает:
+
+- администратора;
+- преподавателя;
+- студента;
+- группу;
+- дисциплину;
+- учебный период;
+- назначение преподавателя;
+- работу журнала;
+- оценку;
+- занятие;
+- запись посещаемости;
+- напоминание преподавателю.
+
 Учетные записи:
 
-- `admin / admin123`
-- `teacher / teacher123`
-- `student / student123`
+| Роль | Логин | Пароль |
+| --- | --- | --- |
+| Администратор | `admin` | `admin123` |
+| Преподаватель | `teacher` | `teacher123` |
+| Студент | `student` | `student123` |
 
-## Сервисы
+## Основные адреса
 
-- `frontend` - React/Vite клиентская часть.
-- `backend` - Django REST API.
-- `db` - PostgreSQL.
-- `redis` - брокер Celery.
-- `celery-worker` - выполнение фоновых задач.
-- `celery-beat` - расписание фоновых задач.
+- Frontend: `http://localhost:3000/`
+- Backend healthcheck: `http://localhost:8000/health/`
+- Django admin: `http://localhost:8000/admin/`
+- API root: `http://localhost:8000/api/`
 
 ## Полезные команды
+
+Логи:
 
 ```bash
 docker compose logs -f frontend
 docker compose logs -f backend
 docker compose logs -f celery-worker
-docker compose exec backend python manage.py migrate
-docker compose exec backend python manage.py createsuperuser
-docker compose exec backend pytest -q
-docker compose exec frontend npm run lint
-docker compose exec frontend npm run build
+docker compose logs -f celery-beat
+```
+
+Перезапуск отдельных сервисов:
+
+```bash
+docker compose restart frontend
+docker compose restart backend
+docker compose restart celery-worker celery-beat
+```
+
+Остановка:
+
+```bash
 docker compose down
 ```
 
+Остановка с удалением volumes:
+
+```bash
+docker compose down -v
+```
+
+Использовать осторожно: эта команда удалит данные PostgreSQL и Redis.
+
 ## Переменные окружения
 
-Основные параметры задаются в `.env`:
+Основные переменные в `.env`:
 
-- `DJANGO_SECRET_KEY`
-- `DJANGO_DEBUG`
-- `DJANGO_ALLOWED_HOSTS`
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `POSTGRES_HOST`
-- `POSTGRES_PORT`
-- `REDIS_URL`
-- `VITE_API_BASE_URL`
+| Переменная | Назначение |
+| --- | --- |
+| `DJANGO_ENV` | режим настроек |
+| `DJANGO_SECRET_KEY` | секретный ключ |
+| `DJANGO_DEBUG` | debug-режим |
+| `DJANGO_ALLOWED_HOSTS` | разрешенные хосты |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | доверенные origins для CSRF |
+| `POSTGRES_DB` | база PostgreSQL |
+| `POSTGRES_USER` | пользователь PostgreSQL |
+| `POSTGRES_PASSWORD` | пароль PostgreSQL |
+| `POSTGRES_HOST` | host PostgreSQL |
+| `POSTGRES_PORT` | порт PostgreSQL |
+| `REDIS_URL` | Redis URL |
+| `CORS_ALLOWED_ORIGINS` | разрешенные origins frontend |
+| `VITE_API_BASE_URL` | URL backend для frontend |
 
-Для промышленной среды нужно задать собственный `DJANGO_SECRET_KEY`, отключить `DJANGO_DEBUG` и ограничить `DJANGO_ALLOWED_HOSTS`.
+## Production-заметки
+
+Перед промышленной эксплуатацией нужно:
+
+- заменить `DJANGO_SECRET_KEY`;
+- установить `DJANGO_DEBUG=False`;
+- ограничить `DJANGO_ALLOWED_HOSTS`;
+- ограничить `CORS_ALLOWED_ORIGINS`;
+- настроить HTTPS на внешнем reverse proxy;
+- настроить хранение и отдачу `MEDIA_ROOT`;
+- настроить регулярные резервные копии PostgreSQL;
+- настроить мониторинг контейнеров, диска и фоновых задач;
+- заменить dev-команду `runserver` на production WSGI/ASGI запуск, например Gunicorn.
