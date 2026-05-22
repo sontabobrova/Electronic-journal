@@ -3,7 +3,7 @@
 ## Требования
 
 - Docker и Docker Compose.
-- Свободные порты `8000`, `5432`, `6379`, если значения не переопределены в `.env`.
+- Свободные порты `3000`, `8000`, `5432`, `6379`, если значения не переопределены в `.env`.
 - Доступ к каталогу проекта и право создавать Docker volumes.
 
 ## Первый запуск
@@ -38,6 +38,12 @@
    {"status":"ok"}
    ```
 
+5. Откройте клиентскую часть:
+
+   ```text
+   http://localhost:3000/
+   ```
+
 ## Демо-данные для приемки
 
 Команда создает администратора, преподавателя, студента, группу, дисциплину, учебный период, назначение, оценку, посещаемость и напоминание. Команду можно запускать повторно.
@@ -54,6 +60,7 @@ docker compose exec backend python manage.py create_demo_data
 
 ## Сервисы
 
+- `frontend` - React/Vite клиентская часть.
 - `backend` - Django REST API.
 - `db` - PostgreSQL.
 - `redis` - брокер Celery.
@@ -63,11 +70,14 @@ docker compose exec backend python manage.py create_demo_data
 ## Полезные команды
 
 ```bash
+docker compose logs -f frontend
 docker compose logs -f backend
 docker compose logs -f celery-worker
 docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py createsuperuser
 docker compose exec backend pytest -q
+docker compose exec frontend npm run lint
+docker compose exec frontend npm run build
 docker compose down
 ```
 
@@ -84,5 +94,6 @@ docker compose down
 - `POSTGRES_HOST`
 - `POSTGRES_PORT`
 - `REDIS_URL`
+- `VITE_API_BASE_URL`
 
 Для промышленной среды нужно задать собственный `DJANGO_SECRET_KEY`, отключить `DJANGO_DEBUG` и ограничить `DJANGO_ALLOWED_HOSTS`.

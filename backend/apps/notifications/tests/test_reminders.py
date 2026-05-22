@@ -103,6 +103,29 @@ def test_admin_sees_all_notifications(monkeypatch):
 
     assert response.status_code == 200
     assert len(response.data) == 2
+    assert response.data[0]["recipient_details"]["role"] == UserRole.TEACHER
+
+
+def test_admin_cannot_mark_teacher_notification_read(monkeypatch):
+    today = date(2026, 5, 22)
+    monkeypatch.setattr(timezone, "localdate", lambda: today)
+    period = AcademicPeriod.objects.create(
+        name="РџРµСЂРёРѕРґ С‡СѓР¶РѕРіРѕ СѓРІРµРґРѕРјР»РµРЅРёСЏ",
+        starts_at=today - timedelta(days=30),
+        ends_at=today + timedelta(days=3),
+    )
+    teacher = create_assignment_for_period("admin-cannot-read-teacher", period)
+    send_session_closing_reminders()
+    notification = Notification.objects.get(recipient=teacher)
+    admin = create_user("notification-admin-denied", UserRole.ADMIN)
+    client = APIClient()
+    client.force_authenticate(admin)
+
+    response = client.post(reverse("notifications-mark-read", args=[notification.id]))
+
+    assert response.status_code == 403
+    notification.refresh_from_db()
+    assert notification.is_read is False
 
 
 def test_student_does_not_receive_teacher_reminders(monkeypatch):

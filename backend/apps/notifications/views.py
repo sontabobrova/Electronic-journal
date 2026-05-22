@@ -1,5 +1,6 @@
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -21,6 +22,8 @@ class NotificationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
     @action(detail=True, methods=["post"], url_path="mark-read")
     def mark_read(self, request, pk=None):
         notification = self.get_object()
+        if notification.recipient_id != request.user.id:
+            raise PermissionDenied("Можно отмечать прочитанными только свои уведомления.")
         serializer = NotificationMarkReadSerializer(notification)
         serializer.save()
         return Response(NotificationSerializer(notification).data)

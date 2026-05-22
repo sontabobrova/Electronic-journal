@@ -1,6 +1,22 @@
 name: electronic-journal
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_started
+
   backend:
     build:
       context: ./backend
@@ -74,5 +90,6 @@ services:
       - redis_data:/data
 
 volumes:
+  frontend_node_modules:
   postgres_data:
   redis_data:

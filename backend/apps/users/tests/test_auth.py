@@ -24,9 +24,24 @@ def test_login_returns_current_user_payload():
     response = APIClient().post(reverse("auth-login"), {"username": "teacher", "password": "secret123"})
 
     assert response.status_code == 200
+    assert response.data["token"]
+    assert response.data["user"]["id"] == user.id
+    assert response.data["user"]["role"] == UserRole.TEACHER
+    assert response.data["user"]["permissions"]["is_teacher"] is True
+
+
+def test_token_can_be_used_for_current_user_endpoint():
+    user = get_user_model().objects.create_user(username="teacher", password="secret123", role=UserRole.TEACHER)
+    client = APIClient()
+
+    login_response = client.post(reverse("auth-login"), {"username": "teacher", "password": "secret123"})
+    token = login_response.data["token"]
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
+    response = client.get(reverse("auth-me"))
+
+    assert response.status_code == 200
     assert response.data["id"] == user.id
     assert response.data["role"] == UserRole.TEACHER
-    assert response.data["permissions"]["is_teacher"] is True
 
 
 def test_account_is_locked_after_three_failed_login_attempts():

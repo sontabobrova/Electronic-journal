@@ -1,16 +1,21 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.users.serializers import UserReadSerializer
+
 from .models import Notification
 
 
 class NotificationSerializer(serializers.ModelSerializer):
     period_name = serializers.CharField(source="period.name", read_only=True)
+    recipient_details = UserReadSerializer(source="recipient", read_only=True)
 
     class Meta:
         model = Notification
         fields = (
             "id",
+            "recipient",
+            "recipient_details",
             "notification_type",
             "title",
             "message",
