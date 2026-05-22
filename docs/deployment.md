@@ -1,6 +1,6 @@
 # Развертывание и эксплуатационный запуск
 
-Актуализировано: 22.05.2026.
+Актуализировано: 23.05.2026.
 
 Документ описывает локальный запуск проекта через Docker Compose и базовые действия для эксплуатации стенда.
 
@@ -98,6 +98,12 @@ docker compose exec backend python manage.py makemigrations --check --dry-run
 docker compose exec backend python manage.py create_demo_data
 ```
 
+Создание большого демонстрационного набора с предварительной очисткой старых demo-записей:
+
+```bash
+docker compose exec backend python manage.py create_demo_data --reset --full
+```
+
 Команда создает:
 
 - администратора;
@@ -113,6 +119,21 @@ docker compose exec backend python manage.py create_demo_data
 - запись посещаемости;
 - напоминание преподавателю.
 
+В режиме `--full` создается расширенный стенд:
+
+- 67 demo-пользователей;
+- 6 групп;
+- 10 дисциплин;
+- 3 учебных периода;
+- 42 назначения преподавателей;
+- 252 работы журнала;
+- 2520 оценок;
+- 336 занятий;
+- 3360 записей посещаемости;
+- персональные уведомления преподавателей.
+
+Команда идемпотентна: повторный запуск не должен создавать дубликаты. Флаг `--reset` удаляет только известные demo-записи, созданные этой командой, и не очищает всю базу.
+
 Учетные записи:
 
 | Роль | Логин | Пароль |
@@ -120,6 +141,11 @@ docker compose exec backend python manage.py create_demo_data
 | Администратор | `admin` | `admin123` |
 | Преподаватель | `teacher` | `teacher123` |
 | Студент | `student` | `student123` |
+
+Дополнительные учетные записи в режиме `--full`:
+
+- `demo_teacher_01` ... `demo_teacher_05` / `teacher123`;
+- `demo_student_001` ... `demo_student_059` / `student123`.
 
 ## Основные адреса
 
@@ -145,6 +171,12 @@ docker compose logs -f celery-beat
 docker compose restart frontend
 docker compose restart backend
 docker compose restart celery-worker celery-beat
+```
+
+Пересоздание demo-стенда:
+
+```bash
+docker compose exec backend python manage.py create_demo_data --reset --full
 ```
 
 Остановка:

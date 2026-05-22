@@ -1,6 +1,6 @@
 # Приемочные сценарии
 
-Актуализировано: 22.05.2026.
+Актуализировано: 23.05.2026.
 
 ## 1. Базовый запуск
 
@@ -16,6 +16,8 @@
 - `docker compose ps` показывает запущенные контейнеры;
 - команда `docker compose exec backend python manage.py create_demo_data` завершается успешно;
 - повторный запуск `create_demo_data` не создает дубликаты ключевых демо-записей.
+- команда `docker compose exec backend python manage.py create_demo_data --reset --full` создает большой воспроизводимый демонстрационный набор;
+- повторный запуск `docker compose exec backend python manage.py create_demo_data --full` не создает дубликаты.
 
 ## 2. Авторизация и роли
 

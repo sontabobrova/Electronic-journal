@@ -61,6 +61,14 @@ docker compose exec backend python manage.py create_demo_data
 
 Команда демо-данных идемпотентна: ее можно запускать повторно, основные записи не должны дублироваться.
 
+Для расширенного демонстрационного стенда:
+
+```bash
+docker compose exec backend python manage.py create_demo_data --reset --full
+```
+
+Эта команда воспроизводимо создает большой набор данных для показа системы: пользователей, группы, дисциплины, периоды, назначения, работы журнала, оценки, занятия, посещаемость и уведомления. Очистка `--reset` удаляет только данные, созданные demo-командой.
+
 ## Демо-доступ
 
 После выполнения `create_demo_data` доступны учетные записи:
@@ -70,6 +78,11 @@ docker compose exec backend python manage.py create_demo_data
 | Администратор | `admin` | `admin123` |
 | Преподаватель | `teacher` | `teacher123` |
 | Студент | `student` | `student123` |
+
+В режиме `--full` дополнительно создаются:
+
+- `demo_teacher_01` ... `demo_teacher_05` с паролем `teacher123`;
+- `demo_student_001` ... `demo_student_059` с паролем `student123`.
 
 ## Функционал
 
@@ -355,6 +368,7 @@ docker compose down
 ```bash
 docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py create_demo_data
+docker compose exec backend python manage.py create_demo_data --reset --full
 docker compose exec backend python manage.py createsuperuser
 docker compose exec backend python manage.py check
 docker compose exec backend pytest -q

@@ -1,6 +1,6 @@
 # Тестирование
 
-Актуализировано: 22.05.2026.
+Актуализировано: 23.05.2026.
 
 ## Автоматические проверки
 
@@ -92,6 +92,16 @@ docker compose exec backend pytest apps/users/tests/test_auth.py apps/education/
 docker compose exec frontend npm run lint
 docker compose exec frontend npm run build
 ```
+
+Проверка воспроизводимого demo-набора:
+
+```bash
+docker compose exec backend pytest apps/common/tests/test_create_demo_data.py -q
+docker compose exec backend python manage.py create_demo_data --reset --full
+docker compose exec backend python manage.py create_demo_data --full
+```
+
+Повторный запуск `--full` не должен создавать дубликаты, а `--reset --full` должен очищать только demo-записи.
 
 Дополнительно открыть в браузере:
 

@@ -1,6 +1,6 @@
 # Документация проекта
 
-Актуализировано: 22.05.2026.
+Актуализировано: 23.05.2026.
 
 Этот каталог содержит эксплуатационную и приемочную документацию по проекту `Электронный журнал`.
 
@@ -19,4 +19,18 @@
 - Frontend: `http://localhost:3000/`
 - Backend healthcheck: `http://localhost:8000/health/`
 - Django admin: `http://localhost:8000/admin/`
+
+## Demo-стенд
+
+Минимальный набор:
+
+```bash
+docker compose exec backend python manage.py create_demo_data
+```
+
+Большой воспроизводимый набор для демонстрации:
+
+```bash
+docker compose exec backend python manage.py create_demo_data --reset --full
+```
 

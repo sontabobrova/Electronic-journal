@@ -44,3 +44,32 @@ def test_create_demo_data_command_is_idempotent():
     assert ClassSession.objects.count() == 1
     assert AttendanceRecord.objects.count() == 1
     assert Notification.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_create_demo_data_full_mode_is_idempotent():
+    call_command("create_demo_data", "--full")
+    call_command("create_demo_data", "--full")
+
+    assert User.objects.count() == 67
+    assert AcademicGroup.objects.count() == 6
+    assert Subject.objects.count() == 10
+    assert AcademicPeriod.objects.count() == 3
+    assert TeachingAssignment.objects.count() == 42
+    assert GradeWork.objects.count() == 252
+    assert Grade.objects.count() == 2520
+    assert ClassSession.objects.count() == 336
+    assert AttendanceRecord.objects.count() == 3360
+    assert Notification.objects.count() == 6
+
+
+@pytest.mark.django_db
+def test_create_demo_data_reset_deletes_only_demo_records():
+    User.objects.create_user(username="custom_user", password="secret123")
+
+    call_command("create_demo_data", "--full")
+    call_command("create_demo_data", "--reset", "--full")
+
+    assert User.objects.filter(username="custom_user").exists()
+    assert User.objects.count() == 68
+    assert TeachingAssignment.objects.count() == 42
