@@ -1,5 +1,7 @@
 from rest_framework import viewsets
 
+from apps.users.models import UserRole
+
 from .models import AcademicGroup, AcademicPeriod, StudentProfile, Subject, TeacherProfile, TeachingAssignment
 from .permissions import IsAdminOrReadOnlyAuthenticated
 from .serializers import (
@@ -31,13 +33,13 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
 
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
-    queryset = StudentProfile.objects.select_related("user", "group").all()
+    queryset = StudentProfile.objects.select_related("user", "group").filter(user__role=UserRole.STUDENT)
     serializer_class = StudentProfileSerializer
     permission_classes = [IsAdminOrReadOnlyAuthenticated]
 
 
 class TeacherProfileViewSet(viewsets.ModelViewSet):
-    queryset = TeacherProfile.objects.select_related("user").all()
+    queryset = TeacherProfile.objects.select_related("user").filter(user__role=UserRole.TEACHER)
     serializer_class = TeacherProfileSerializer
     permission_classes = [IsAdminOrReadOnlyAuthenticated]
 

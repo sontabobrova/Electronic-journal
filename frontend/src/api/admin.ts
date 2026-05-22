@@ -44,6 +44,19 @@ export type UserPayload = {
   username: string;
 };
 
+export type StudentProfilePayload = {
+  enrollment_date: string | null;
+  group: number;
+  student_id: number;
+  user: number;
+};
+
+export type TeacherProfilePayload = {
+  personnel_number?: string;
+  position: string;
+  user: number;
+};
+
 export type AcademicGroup = {
   id: number;
   name: string;
@@ -199,8 +212,28 @@ export async function fetchStudentsAdmin(): Promise<StudentProfileAdmin[]> {
   return response.data;
 }
 
+export async function createStudentProfile(payload: StudentProfilePayload): Promise<StudentProfileAdmin> {
+  const response = await apiClient.post<StudentProfileAdmin>("/api/education/students/", payload);
+  return response.data;
+}
+
+export async function updateStudentProfile(id: number, payload: Partial<StudentProfilePayload>): Promise<StudentProfileAdmin> {
+  const response = await apiClient.patch<StudentProfileAdmin>(`/api/education/students/${id}/`, payload);
+  return response.data;
+}
+
 export async function fetchTeachersAdmin(): Promise<TeacherProfileAdmin[]> {
   const response = await apiClient.get<TeacherProfileAdmin[]>("/api/education/teachers/");
+  return response.data;
+}
+
+export async function createTeacherProfile(payload: Required<TeacherProfilePayload>): Promise<TeacherProfileAdmin> {
+  const response = await apiClient.post<TeacherProfileAdmin>("/api/education/teachers/", payload);
+  return response.data;
+}
+
+export async function updateTeacherProfile(id: number, payload: Partial<TeacherProfilePayload>): Promise<TeacherProfileAdmin> {
+  const response = await apiClient.patch<TeacherProfileAdmin>(`/api/education/teachers/${id}/`, payload);
   return response.data;
 }
 

@@ -11,6 +11,7 @@ from apps.audit.services import log_audit_event
 
 from .models import User
 from .permissions import IsSystemAdmin
+from .profile_sync import ensure_role_profile
 from .serializers import (
     CurrentUserSerializer,
     LoginSerializer,
@@ -60,6 +61,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        ensure_role_profile(user)
         log_audit_event(
             action=AuditAction.USER_CREATED,
             actor=self.request.user,
@@ -70,6 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         user = serializer.save()
+        ensure_role_profile(user)
         log_audit_event(
             action=AuditAction.USER_UPDATED,
             actor=self.request.user,

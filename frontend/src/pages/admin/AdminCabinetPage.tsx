@@ -8,7 +8,9 @@ import {
   createAssignment,
   createGroup,
   createPeriod,
+  createStudentProfile,
   createSubject,
+  createTeacherProfile,
   createUser,
   deleteAssignment,
   deleteGroup,
@@ -19,6 +21,7 @@ import {
   fetchAuditLogs,
   fetchGroups,
   fetchPeriods,
+  fetchStudentsAdmin,
   fetchSubjects,
   fetchTeachersAdmin,
   fetchUsers,
@@ -26,13 +29,16 @@ import {
   updateAssignment,
   updateGroup,
   updatePeriod,
+  updateStudentProfile,
   updateSubject,
+  updateTeacherProfile,
   updateUser,
 } from "../../api/admin";
 import type {
   AcademicGroup,
   AcademicPeriod,
   AuditLog,
+  StudentProfileAdmin,
   Subject,
   TeacherProfileAdmin,
   TeachingAssignmentAdmin,
@@ -71,6 +77,11 @@ type UserForm = {
   password: string;
   phone: string;
   role: UserRole;
+  student_enrollment_date: string;
+  student_group: string;
+  student_id: string;
+  teacher_personnel_number: string;
+  teacher_position: string;
   username: string;
 };
 
@@ -96,6 +107,7 @@ const emptyUsers: CurrentUser[] = [];
 const emptyGroups: AcademicGroup[] = [];
 const emptySubjects: Subject[] = [];
 const emptyPeriods: AcademicPeriod[] = [];
+const emptyStudents: StudentProfileAdmin[] = [];
 const emptyTeachers: TeacherProfileAdmin[] = [];
 const emptyAssignments: TeachingAssignmentAdmin[] = [];
 const emptyAuditLogs: AuditLog[] = [];
@@ -125,6 +137,7 @@ export function AdminCabinetPage() {
   const groupsQuery = useQuery({ queryKey: ["admin", "groups"], queryFn: fetchGroups });
   const subjectsQuery = useQuery({ queryKey: ["admin", "subjects"], queryFn: fetchSubjects });
   const periodsQuery = useQuery({ queryKey: ["admin", "periods"], queryFn: fetchPeriods });
+  const studentsQuery = useQuery({ queryKey: ["admin", "students"], queryFn: fetchStudentsAdmin });
   const teachersQuery = useQuery({ queryKey: ["admin", "teachers"], queryFn: fetchTeachersAdmin });
   const assignmentsQuery = useQuery({ queryKey: ["admin", "assignments"], queryFn: fetchAssignmentsAdmin });
   const auditQuery = useQuery({ queryKey: ["admin", "audit"], queryFn: fetchAuditLogs });
@@ -134,7 +147,11 @@ export function AdminCabinetPage() {
   };
 
   const saveUserMutation = useMutation({
-    mutationFn: (payload: UserPayload) => (editingUser ? updateUser(editingUser.id, stripEmptyPassword(payload)) : createUser(payload)),
+    mutationFn: async (payload: UserPayload) => {
+      const savedUser = editingUser ? await updateUser(editingUser.id, stripEmptyPassword(payload)) : await createUser(payload);
+      await syncRoleProfile(savedUser.id, payload.role);
+      return savedUser;
+    },
     onSuccess: async () => {
       closeModal();
       await invalidateAdminQueries();
@@ -237,6 +254,7 @@ export function AdminCabinetPage() {
   const groups = groupsQuery.data ?? emptyGroups;
   const subjects = subjectsQuery.data ?? emptySubjects;
   const periods = periodsQuery.data ?? emptyPeriods;
+  const students = studentsQuery.data ?? emptyStudents;
   const teachers = teachersQuery.data ?? emptyTeachers;
   const assignments = assignmentsQuery.data ?? emptyAssignments;
   const auditLogs = auditQuery.data ?? emptyAuditLogs;
@@ -378,11 +396,13 @@ export function AdminCabinetPage() {
 
   function openCreateUser() {
     setEditingUser(null);
-    setUserForm(emptyUserForm());
+    setUserForm({ ...emptyUserForm(), student_group: groupOptions[0]?.value ?? "" });
     openModal("user");
   }
 
   function openEditUser(user: CurrentUser) {
+    const studentProfile = students.find((profile) => profile.user === user.id);
+    const teacherProfile = teachers.find((profile) => profile.user === user.id);
     setEditingUser(user);
     setUserForm({
       access_expires_at: user.access_expires_at ? user.access_expires_at.slice(0, 16) : "",
@@ -393,6 +413,11 @@ export function AdminCabinetPage() {
       password: "",
       phone: user.phone,
       role: user.role,
+      student_enrollment_date: studentProfile?.enrollment_date ?? "",
+      student_group: studentProfile?.group.toString() ?? groupOptions[0]?.value ?? "",
+      student_id: studentProfile?.student_id.toString() ?? "",
+      teacher_personnel_number: teacherProfile?.personnel_number ?? "",
+      teacher_position: teacherProfile?.position ?? "",
       username: user.username,
     });
     openModal("user");
@@ -496,6 +521,11 @@ export function AdminCabinetPage() {
 
   function handleUserSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (userForm.role === "student" && (!userForm.student_id || !userForm.student_group)) {
+      setFormError("Заполните номер студента и группу.");
+      return;
+    }
+
     saveUserMutation.mutate({
       access_expires_at: userForm.access_expires_at ? new Date(userForm.access_expires_at).toISOString() : null,
       email: userForm.email,
@@ -507,6 +537,45 @@ export function AdminCabinetPage() {
       role: userForm.role,
       username: userForm.username,
     });
+  }
+
+  async function syncRoleProfile(userId: number, role: UserRole) {
+    if (role === "student") {
+      const payload = {
+        enrollment_date: userForm.student_enrollment_date || null,
+        group: Number(userForm.student_group),
+        student_id: Number(userForm.student_id),
+        user: userId,
+      };
+      const existingProfile = students.find((profile) => profile.user === userId);
+
+      if (existingProfile) {
+        await updateStudentProfile(existingProfile.id, payload);
+      } else {
+        await createStudentProfile(payload);
+      }
+    }
+
+    if (role === "teacher") {
+      const freshTeachers = await fetchTeachersAdmin();
+      const existingProfile = freshTeachers.find((profile) => profile.user === userId);
+      const personnelNumber = userForm.teacher_personnel_number.trim();
+      const payload = {
+        position: userForm.teacher_position,
+        user: userId,
+        ...(personnelNumber ? { personnel_number: personnelNumber } : {}),
+      };
+
+      if (existingProfile) {
+        await updateTeacherProfile(existingProfile.id, payload);
+      } else {
+        await createTeacherProfile({
+          personnel_number: personnelNumber || buildDefaultPersonnelNumber(userId),
+          position: userForm.teacher_position,
+          user: userId,
+        });
+      }
+    }
   }
 
   return (
@@ -610,6 +679,30 @@ export function AdminCabinetPage() {
             <SelectField label="Статус" onChange={(event) => setUserForm((current) => ({ ...current, is_active: event.target.value }))} options={activeOptions} value={userForm.is_active} />
             <TextField label="Доступ до" onChange={(event) => setUserForm((current) => ({ ...current, access_expires_at: event.target.value }))} type="datetime-local" value={userForm.access_expires_at} />
           </div>
+          {userForm.role === "student" ? (
+            <div className="role-profile-fields">
+              <h3>Профиль студента</h3>
+              <div className="form-grid form-grid--two">
+                <TextField label="Номер студента" min="1" onChange={(event) => setUserForm((current) => ({ ...current, student_id: event.target.value }))} required type="number" value={userForm.student_id} />
+                <SelectField label="Группа" onChange={(event) => setUserForm((current) => ({ ...current, student_group: event.target.value }))} options={groupOptions} required value={userForm.student_group} />
+              </div>
+              <TextField label="Дата зачисления" onChange={(event) => setUserForm((current) => ({ ...current, student_enrollment_date: event.target.value }))} type="date" value={userForm.student_enrollment_date} />
+            </div>
+          ) : null}
+          {userForm.role === "teacher" ? (
+            <div className="role-profile-fields">
+              <h3>Профиль преподавателя</h3>
+              <div className="form-grid form-grid--two">
+                <TextField
+                  hint="Если оставить пустым, номер будет назначен автоматически."
+                  label="Табельный номер"
+                  onChange={(event) => setUserForm((current) => ({ ...current, teacher_personnel_number: event.target.value }))}
+                  value={userForm.teacher_personnel_number}
+                />
+                <TextField label="Должность" onChange={(event) => setUserForm((current) => ({ ...current, teacher_position: event.target.value }))} value={userForm.teacher_position} />
+              </div>
+            </div>
+          ) : null}
           <FormError text={formError} />
         </form>
       </Modal>
@@ -727,8 +820,17 @@ function emptyUserForm(): UserForm {
     password: "",
     phone: "",
     role: "student",
+    student_enrollment_date: "",
+    student_group: "",
+    student_id: "",
+    teacher_personnel_number: "",
+    teacher_position: "",
     username: "",
   };
+}
+
+function buildDefaultPersonnelNumber(userId: number): string {
+  return `T-${userId.toString().padStart(6, "0")}`;
 }
 
 function stripEmptyPassword(payload: UserPayload): Partial<UserPayload> {
@@ -765,6 +867,9 @@ function formatDateTime(value: string) {
 function getApiErrorMessage(error: unknown): string {
   if (error instanceof AxiosError && error.response?.data) {
     return flattenError(error.response.data);
+  }
+  if (error instanceof Error) {
+    return error.message;
   }
   return "Не удалось сохранить данные. Проверьте поля формы.";
 }

@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.education.models import TeacherProfile
 from apps.users.models import UserRole
 
 
@@ -85,6 +86,19 @@ def test_admin_can_create_user_and_regular_user_cannot():
     assert created_response.status_code == 201
     assert created_response.data["username"] == "new-teacher"
     assert created_response.data["role"] == UserRole.TEACHER
+    assert TeacherProfile.objects.filter(user__username="new-teacher").exists()
+
+
+def test_admin_role_update_to_teacher_creates_teacher_profile():
+    admin = get_user_model().objects.create_user(username="admin", password="secret123", role=UserRole.ADMIN)
+    user = get_user_model().objects.create_user(username="new-worker", password="secret123", role=UserRole.STUDENT)
+
+    client = APIClient()
+    client.force_authenticate(user=admin)
+    response = client.patch(reverse("users-detail", args=[user.id]), {"role": UserRole.TEACHER}, format="json")
+
+    assert response.status_code == 200
+    assert TeacherProfile.objects.filter(user=user, personnel_number=f"T-{user.id:06d}").exists()
 
 
 def test_admin_can_reset_password_and_unlock_user():
