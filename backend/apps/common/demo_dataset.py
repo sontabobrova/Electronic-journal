@@ -123,9 +123,9 @@ WORK_TEMPLATES = [
     DemoWorkTemplate("Практическая работа 1", GradeWorkType.CLASSWORK, -24, Decimal("5.00"), Decimal("1.00")),
     DemoWorkTemplate("Домашняя работа 1", GradeWorkType.HOMEWORK, -20, Decimal("5.00"), Decimal("0.80")),
     DemoWorkTemplate("Практическая работа 2", GradeWorkType.CLASSWORK, -16, Decimal("5.00"), Decimal("1.00")),
-    DemoWorkTemplate("Тестирование модуля", GradeWorkType.TEST, -12, Decimal("10.00"), Decimal("1.50")),
-    DemoWorkTemplate("Индивидуальное задание", GradeWorkType.OTHER, -8, Decimal("10.00"), Decimal("1.20")),
-    DemoWorkTemplate("Контрольная работа", GradeWorkType.TEST, -4, Decimal("10.00"), Decimal("2.00")),
+    DemoWorkTemplate("Тестирование модуля", GradeWorkType.TEST, -12, Decimal("5.00"), Decimal("1.50")),
+    DemoWorkTemplate("Индивидуальное задание", GradeWorkType.OTHER, -8, Decimal("5.00"), Decimal("1.20")),
+    DemoWorkTemplate("Контрольная работа", GradeWorkType.TEST, -4, Decimal("5.00"), Decimal("2.00")),
 ]
 
 SESSION_TOPICS = [

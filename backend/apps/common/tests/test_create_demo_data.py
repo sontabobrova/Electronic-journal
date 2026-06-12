@@ -1,5 +1,6 @@
 import pytest
 from django.core.management import call_command
+from django.db.models import Avg, Max
 
 from apps.education.models import (
     AcademicGroup,
@@ -61,6 +62,11 @@ def test_create_demo_data_full_mode_is_idempotent():
     assert ClassSession.objects.count() == 336
     assert AttendanceRecord.objects.count() == 3360
     assert Notification.objects.count() == 6
+
+    assert GradeWork.objects.aggregate(max_score=Max("max_score"))["max_score"] == 5
+    assert Grade.objects.aggregate(max_value=Max("value"))["max_value"] <= 5
+    student_averages = Grade.objects.values("student_id").annotate(average=Avg("value"))
+    assert all(row["average"] <= 5 for row in student_averages)
 
 
 @pytest.mark.django_db
