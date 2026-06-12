@@ -32,3 +32,5 @@ frontend/vite.config.js
 .idea/
 .vscode/
 *.log
+load_tests/reports/*
+!load_tests/reports/.gitkeep

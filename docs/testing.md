@@ -110,3 +110,15 @@ docker compose exec backend python manage.py create_demo_data --full
 - `/student` - личные оценки и посещаемость;
 - `/reports` - генерация отчета;
 - `/notifications` - уведомления администратора или преподавателя.
+
+## Нагрузочное тестирование
+
+Нагрузочные сценарии находятся в `load_tests/`.
+
+Запуск web-интерфейса:
+
+```bash
+docker compose --profile loadtest up loadtest
+```
+
+Инструкция для скриншотов и headless-отчетов: [load-testing.md](load-testing.md).

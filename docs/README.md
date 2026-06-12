@@ -8,6 +8,7 @@
 
 - [deployment.md](deployment.md) - запуск проекта, Docker Compose, переменные окружения, production-заметки.
 - [testing.md](testing.md) - автоматические тесты, frontend-проверки, smoke-test и ручная приемка.
+- [load-testing.md](load-testing.md) - нагрузочное тестирование через Locust и получение скриншотов для отчета.
 - [acceptance-test-cases.md](acceptance-test-cases.md) - приемочные сценарии по ролям и разделам.
 - [admin-guide.md](admin-guide.md) - руководство администратора по пользователям, учебному процессу, отчетам и аудиту.
 - [user-guide.md](user-guide.md) - руководство студента и преподавателя.

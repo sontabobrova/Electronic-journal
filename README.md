@@ -465,6 +465,7 @@ npm run dev
 - [docs/README.md](docs/README.md) - индекс документации.
 - [docs/deployment.md](docs/deployment.md) - развертывание, эксплуатационный запуск и сервисы.
 - [docs/testing.md](docs/testing.md) - автоматические проверки, ручная приемка и тестовые зоны.
+- [docs/load-testing.md](docs/load-testing.md) - нагрузочное тестирование через Locust и скриншоты результатов.
 - [docs/acceptance-test-cases.md](docs/acceptance-test-cases.md) - приемочные сценарии по ролям.
 - [docs/admin-guide.md](docs/admin-guide.md) - руководство администратора.
 - [docs/user-guide.md](docs/user-guide.md) - руководство студента и преподавателя.

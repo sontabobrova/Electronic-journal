@@ -89,6 +89,22 @@ services:
     volumes:
       - redis_data:/data
 
+  loadtest:
+    image: locustio/locust:2.32.9
+    profiles:
+      - loadtest
+    working_dir: /mnt/locust
+    command: -f /mnt/locust/locustfile.py --host http://backend:8000
+    environment:
+      LOADTEST_ENABLE_WRITES: ${LOADTEST_ENABLE_WRITES:-false}
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./load_tests:/mnt/locust
+    depends_on:
+      backend:
+        condition: service_started
+
 volumes:
   frontend_node_modules:
   postgres_data:
